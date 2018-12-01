@@ -86,8 +86,7 @@ def build_and_run(n, x_star, real, backend_name):
     gc = circuit.get_circuit(n, oracle)
     backend, max_credits, shots = get_appropriate_backend(
         n, real, backend_name)
-    return run_grover_algorithm(
-        build_circuit(n, x_star), backend, max_credits, shots)
+    return run_grover_algorithm(gc, backend, max_credits, shots)
 
 
 def usage():
