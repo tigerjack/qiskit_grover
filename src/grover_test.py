@@ -72,6 +72,9 @@ def run_grover_algorithm(qc, backend, max_credits, shots):
     print("Executing ... ")
     job = execute(qc, backend, shots=shots, max_credits=max_credits)
     print("Job id is {0}".format(job.job_id()))
+    print(
+        "Note that you can also stop the execution here and retrieve the results later using the previous job id and backend name"
+    )
     result = job.result()
     return result.get_counts(qc)
 
@@ -137,6 +140,8 @@ def main(img_dir, plot_dir):
             print("{0} --> {1}".format(k, v))
 
     else:  #execute
+        print("Backend has {0} pending jobs".format(
+            backend.status()['pending_jobs']))
         counts = run_grover_algorithm(gc, backend, max_credits, shots)
         print(counts)
         max, confidence = get_max_key_value(counts)
