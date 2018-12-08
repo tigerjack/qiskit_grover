@@ -5,7 +5,7 @@ from qiskit.tools.visualization import circuit_drawer
 from qiskit.tools.visualization import plot_histogram
 from qiskit import IBMQ, compile
 from qiskit.backends.ibmq import least_busy
-from sys import argv
+from sys import argv, exit
 
 
 def draw_circuit(qc, filename):
@@ -69,6 +69,15 @@ def run_grover_algorithm(qc, backend, max_credits, shots):
     :rtype: dict
     """
 
+    pending_jobs = backend.status()['pending_jobs']
+    print("Backend has {0} pending jobs".format(pending_jobs))
+    if pending_jobs > 1:
+        s = input(
+            "Do you want to wait for the queue list to empty or exit the program(q)?"
+        )
+        if (s == "q"):
+            exit()
+
     print("Executing ... ")
     job = execute(qc, backend, shots=shots, max_credits=max_credits)
     print("Job id is {0}".format(job.job_id()))
@@ -79,14 +88,27 @@ def run_grover_algorithm(qc, backend, max_credits, shots):
     return result.get_counts(qc)
 
 
-def build_and_run(n, x_star, real, backend_name):
+def build_and_infos(n, x_stars, real, backend_name):
+    oracles = []
+    for i in range(len(x_stars)):
+        oracles.append(oracle_simple.OracleSimple(n, x_stars[i]))
+    gc = circuit.get_circuit(n, oracles)
+    backend, max_credits, shots = get_appropriate_backend(
+        n, real, backend_name)
+    res = get_compiled_circuit_infos(gc, backend, max_credits, shots)
+    return res
+
+
+def build_and_run(n, x_stars, real, backend_name):
     """
     This just build the grover circuit for the specific n and x_star
     and run them on the selected backend.
     It may be convenient to use in an interactive shell for quick testing.
     """
-    oracle = oracle_simple.OracleSimple(n, x_star)
-    gc = circuit.get_circuit(n, oracle)
+    oracles = []
+    for i in range(len(x_stars)):
+        oracles.append(oracle_simple.OracleSimple(n, x_stars[i]))
+    gc = circuit.get_circuit(n, oracles)
     backend, max_credits, shots = get_appropriate_backend(
         n, real, backend_name)
     return run_grover_algorithm(gc, backend, max_credits, shots)
@@ -126,11 +148,11 @@ def main(img_dir, plot_dir):
         usage()
         return
 
-    oracle = oracle_simple.OracleSimple(n, x_star)
-    gc = circuit.get_circuit(n, oracle)
+    oracles = [oracle_simple.OracleSimple(n, x_star)]
+    gc = circuit.get_circuit(n, oracles)
 
     if (img_dir is not None):
-        draw_circuit(gc, img_dir + "grover_3_{0}_{1}.png".format(n, x_star))
+        draw_circuit(gc, img_dir + "grover_{0}_{1}.png".format(n, x_star))
 
     backend, max_credits, shots = get_appropriate_backend(
         n, real, backend_name)
@@ -140,8 +162,6 @@ def main(img_dir, plot_dir):
             print("{0} --> {1}".format(k, v))
 
     else:  #execute
-        print("Backend has {0} pending jobs".format(
-            backend.status()['pending_jobs']))
         counts = run_grover_algorithm(gc, backend, max_credits, shots)
         print(counts)
         max, confidence = get_max_key_value(counts)
@@ -156,7 +176,7 @@ def main(img_dir, plot_dir):
 
 # Assumption: if run from console we're inside src/.. dir
 if __name__ == "__main__":
-    #img_dir = "./imgs/"
-    #plot_dir = "./plots/"
-    #main(img_dir, plot_dir)
-    main(None, None)
+    img_dir = "./imgs/"
+    plot_dir = "./plots/"
+    main(img_dir, plot_dir)
+    # main(None, None)

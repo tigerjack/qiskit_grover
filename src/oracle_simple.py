@@ -9,9 +9,9 @@ class OracleSimple(oracle_abstract.Oracle):
     """
 
     def get_circuit(self, qr, qc):
-        if (self.n > 3):
-            raise ValueError(
-                "At the moment, the oracle works with up to 3 qubits")
+        # if (self.n > 3):
+        #     raise ValueError(
+        #         "At the moment, the oracle works with up to 3 qubits")
         if (self.x_star >= 2**self.n):
             raise ValueError("x_star should be b/w 0 and 2**n - 1")
-        qnbs.negating_basis_state(qc, qr, self.x_star)
+        qnbs.negating_basis_state(self.n, qc, qr, self.x_star)

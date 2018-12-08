@@ -1,62 +1,78 @@
 from math import sqrt, pi
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
+import oracle_simple
+import composed_gates
 
 
-def get_circuit(n, oracle):
+def get_circuit(n, oracles):
     """
     Build the circuit composed by the oracle black box and the other quantum gates.
-    :param n: The number of qubits
-    :param oracle: The black box (quantum) oracle
+    :param n: The number of qubits (not including the ancillas)
+    :param oracles: A list of black box (quantum) oracles; each of them selects a specific state
     :returns: The proper quantum circuit
     :rtype: qiskit.QuantumCircuit
     """
 
-    qr = QuantumRegister(n)
     cr = ClassicalRegister(n)
-    qc = QuantumCircuit(qr, cr)
+    ## Testing
+    if n > 3:
+        #anc = QuantumRegister(n - 1, 'anc')
+        # n qubits for the real number
+        # n - 1 qubits for the ancillas
+        qr = QuantumRegister(n + n - 1)
+        qc = QuantumCircuit(qr, cr)
+    else:
+        # We don't need ancillas
+        qr = QuantumRegister(n)
+        qc = QuantumCircuit(qr, cr)
+    ## /Testing
+    print("Number of qubits is {0}".format(len(qr)))
+    print(qr)
 
     # Initial superposition
-    qc.h(qr)
+    for j in range(n):
+        qc.h(qr[j])
 
+    # The length of the oracles list, or, in other words, how many roots of the function do we have
+    m = len(oracles)
     # Grover's algorithm is a repetition of an oracle box and a diffusion box.
     # The number of repetitions is given by the following formula.
-    r = int(round((pi / 2 * sqrt(2**n) - 1) / 2))
+    print("n is ", n)
+    r = int(round((pi / 2 * sqrt((2**n) / m) - 1) / 2))
     print("Repetition of ORACLE+DIFFUSION boxes required: {0}".format(r))
+    oracle_t1 = oracle_simple.OracleSimple(n, 5)
+    oracle_t2 = oracle_simple.OracleSimple(n, 0)
     for j in range(r):
-        oracle.get_circuit(qr, qc)
-        diffusion(qr, qc)
+        for i in range(len(oracles)):
+            oracles[i].get_circuit(qr, qc)
+            diffusion(n, qr, qc)
 
-    qc.measure(qr, cr)
+    for j in range(n):
+        qc.measure(qr[j], cr[j])
     return qc
 
 
-def diffusion(qr, qc):
+def diffusion(n, qr, qc):
     """
     The Grover diffusion operator.
     Given the arry of qiskit QuantumRegister qr and the qiskit QuantumCircuit qc, it adds the diffusion operator to the appropriate qubits in the circuit.
     """
-    n = len(qr)
-    qc.h(qr)
+    for j in range(n):
+        qc.h(qr[j])
 
     # D matrix, flips state |000> only (instead of flipping all the others)
-    qc.x(qr)
-    n_controlled_Z_circuit(qc, [qr[j] for j in range(n - 1)], qr[n - 1])
-    qc.x(qr)
+    for j in range(n):
+        qc.x(qr[j])
+    # 0..n-2 control bits, n-1 target, n..
+    if n > 3:
+        composed_gates.n_controlled_Z_circuit(
+            qc, [qr[j] for j in range(n - 1)], qr[n - 1],
+            [qr[j] for j in range(n, n + n - 1)])
+    else:
+        composed_gates.n_controlled_Z_circuit(
+            qc, [qr[j] for j in range(n - 1)], qr[n - 1], None)
 
-    qc.h(qr)
-
-
-def n_controlled_Z_circuit(qc, controls, target):
-    """
-    Build a CZ circuit w/ a variable number of control qubits and just one target.
-    At the moment, it only works with 1 or 2 control bits and uses for them CX and CCX gates respectively.
-    """
-    if (len(controls) > 2):
-        raise ValueError(
-            "At the moment, the CZ should have at most 2 control qubits")
-    qc.h(target)
-    if (len(controls) == 1):
-        qc.cx(controls[0], target)
-    else:  # len == 2
-        qc.ccx(controls[0], controls[1], target)
-    qc.h(target)
+    for j in range(n):
+        qc.x(qr[j])
+    for j in range(n):
+        qc.h(qr[j])
