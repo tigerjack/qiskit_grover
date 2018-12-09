@@ -5,8 +5,6 @@ Aer = None
 IBMQ = None
 least_busy = None
 
-# from sys import argv, exit
-
 
 def _import_modules():
     print("Importing modules")
@@ -24,9 +22,9 @@ def build_and_infos(n, x_stars, real=False, online=False, backend_name=None):
     oracles = []
     for i in range(len(x_stars)):
         oracles.append(oracle_simple.OracleSimple(n, x_stars[i]))
-    gc = circuit.get_circuit(n, oracles)
+    gc, n_qubits = circuit.get_circuit(n, oracles)
     backend, max_credits, shots = get_appropriate_backend(
-        n, real, online, backend_name)
+        n_qubits, real, online, backend_name)
     res = get_compiled_circuit_infos(gc, backend, max_credits, shots)
     return res
 
@@ -50,12 +48,13 @@ def build_and_run(n, x_stars, real=False, online=False, backend_name=None):
 
 def get_appropriate_backend(n, real, online, backend_name):
     if (not online):
-        print("Simulator backend")
+        print("Local simulator backend")
         backend = Aer.get_backend('qasm_simulator')
         max_credits = 10
         shots = 4098
     # Online, real or simuator?
     else:
+        print("Online {0} backend".format("real" if real else "simulator"))
         max_credits = 3
         shots = 4098
         IBMQ.load_accounts()
@@ -104,6 +103,9 @@ def run_grover_algorithm(qc, backend, max_credits, shots):
     print("Compiling ... ")
     job = execute(qc, backend, shots=shots, max_credits=max_credits)
     print("Job id is {0}".format(job.job_id()))
+    print(
+        "At this point, if any error occurs, you can always retrieve the job results using the backend name and the job id using the utils/retrieve_job_results.py script"
+    )
     if pending_jobs > 1:
         s = input(
             "Do you want to wait for the job to go up in the queue list or exit the program(q)? If you exit now you can still retrieve the job results later on using the backend name and the job id w/ the utils/retrieve_job_results.py script"
@@ -130,25 +132,29 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description="Grover algorithm")
     parser.add_argument(
-        'n', metavar='n', type=int, help='the number of qubits')
+        'n',
+        metavar='n',
+        type=int,
+        help='the number of bits used to store the oracle data.')
     parser.add_argument(
         'x_stars',
         metavar='x_star',
         type=int,
         nargs='+',
         help=
-        'the number(s) for which the oracle returns 1, in the range [0..2**n)')
+        'the number(s) for which the oracle returns 1, in the range [0..2**n-1].'
+    )
     parser.add_argument(
         '-r',
         '--real',
         action='store_true',
-        help='Invoke the real device (implies -o). Default is simulator')
+        help='Invoke the real device (implies -o). Default is simulator.')
     parser.add_argument(
         '-o',
         '--online',
         action='store_true',
         help=
-        'Use the online IBMQ devices. Default is local (simulator). This option is automatically set when we want to use a real device (see -r)'
+        'Use the online IBMQ devices. Default is local (simulator). This option is automatically set when we want to use a real device (see -r).'
     )
     parser.add_argument(
         '-i',
@@ -166,12 +172,12 @@ def main():
     parser.add_argument(
         '--img_dir',
         help=
-        'If you want to store the image of the circuit, you need to specify the directory'
+        'If you want to store the image of the circuit, you need to specify the directory.'
     )
     parser.add_argument(
         '--plot',
         action='store_true',
-        help='Plot the histogram of the results')
+        help='Plot the histogram of the results. Default is false')
     args = parser.parse_args()
     n = args.n
     x_stars = args.x_stars
@@ -190,7 +196,7 @@ def main():
     oracles = []
     for i in range(len(x_stars)):
         oracles.append(oracle_simple.OracleSimple(n, x_stars[i]))
-    gc = circuit.get_circuit(n, oracles)
+    gc, n_qubits = circuit.get_circuit(n, oracles)
 
     if (img_dir is not None):
         from qiskit.tools.visualization import circuit_drawer
@@ -198,7 +204,7 @@ def main():
             gc, filename=img_dir + "grover_{0}_{1}.png".format(n, x_stars[0]))
 
     backend, max_credits, shots = get_appropriate_backend(
-        n, real, online, backend_name)
+        n_qubits, real, online, backend_name)
     if (infos):
         res = get_compiled_circuit_infos(gc, backend, max_credits, shots)
         for k, v in res.items():

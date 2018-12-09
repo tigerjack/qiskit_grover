@@ -49,7 +49,7 @@ def get_circuit(n, oracles):
 
     for j in range(n):
         qc.measure(qr[j], cr[j])
-    return qc
+    return qc, len(qr)
 
 
 def diffusion(n, qr, qc):
