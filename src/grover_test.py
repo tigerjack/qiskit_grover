@@ -23,6 +23,8 @@ def build_and_infos(n, x_stars, real=False, online=False, backend_name=None):
     for i in range(len(x_stars)):
         oracles.append(oracle_simple.OracleSimple(n, x_stars[i]))
     gc, n_qubits = circuit.get_circuit(n, oracles)
+    if real:
+        online = True
     backend, max_credits, shots = get_appropriate_backend(
         n_qubits, real, online, backend_name)
     res = get_compiled_circuit_infos(gc, backend, max_credits, shots)
@@ -41,6 +43,8 @@ def build_and_run(n, x_stars, real=False, online=False, backend_name=None):
     for i in range(len(x_stars)):
         oracles.append(oracle_simple.OracleSimple(n, x_stars[i]))
     gc = circuit.get_circuit(n, oracles)
+    if real:
+        online = True
     backend, max_credits, shots = get_appropriate_backend(
         n, real, online, backend_name)
     return run_grover_algorithm(gc, backend, max_credits, shots)
