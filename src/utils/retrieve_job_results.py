@@ -18,7 +18,10 @@ def get_job_status(backend, job_id):
     if (status.name == 'DONE'):
         print("EUREKA")
         result = ibmq_job.result()
-        print("Result is: {0}".format(result.get_counts()))
+        count = result.get_counts()
+        print("Result is: {0}".format())
+        from qiskit.tools.visualization import plot_histogram
+        plot_histogram(counts)
     else:
         print("... Work in progress ...")
         print("Queue position = {0}".format(ibmq_job.queue_position()))
