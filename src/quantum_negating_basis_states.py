@@ -20,8 +20,7 @@ def negating_basis_state(n, qc, qr, x):
             negating_11(qc, qr)
         else:
             raise ValueError(
-                "Oracle: Invalid value x_star {0} for n = {1}".format(
-                    x_star, n))
+                "Oracle: Invalid value x_star {0} for n = {1}".format(x, n))
     elif (n == 3):
         if (x == 0):
             negating_000(qc, qr)
@@ -41,29 +40,40 @@ def negating_basis_state(n, qc, qr, x):
             negating_111(qc, qr)
         else:
             raise ValueError(
-                "Oracle: Invalid value x_star {0} for n = {1}".format(
-                    x_star, n))
+                "Oracle: Invalid value x_star {0} for n = {1}".format(x, n))
     elif n == 4:
-        # A.T.M., it negates both 14 and 15 state at the same time
         if (x == 15):
-            # but also 1110
-            negating_1111(qc, qr)
+            negating_1111(n, qc, qr)
         else:
             raise ValueError(
-                "Oracle: Invalid value x_star {0} for n = {1}".format(
-                    x_star, n))
+                "Oracle: Invalid value x_star {0} for n = {1}".format(x, n))
+    elif n == 5:
+        if (x == 31):
+            negating_11111(n, qc, qr)
+        else:
+            raise ValueError(
+                "Oracle: Invalid value x_star {0} for n = {1}".format(x, n))
     else:
         raise ValueError("At the moment, the oracle works with up to 3 qubits")
 
 
-def negating_1111(qc, qr):
-    qc.h(qr[3])
+def negating_11111(n, qc, qr):
+    qc.h(qr[n - 1])
+    composed_gates.n_controlled_X_circuit(qc, [qr[j] for j in range(n - 1)],
+                                          qr[n - 1],
+                                          [qr[j] for j in range(n, 2 * n - 1)])
+    qc.h(qr[n - 1])
+
+
+def negating_1111(n, qc, qr):
+    qc.h(qr[n - 1])
     # To implement 1111 exactly (and not also 1110), we should have a ccx(qr[1], 2, 3, 4)
     # qc.ccx(qr[1], qr[2], qr[3])
     # Target is on qr[3], ancillas are qr[4]...qr[6]
-    composed_gates.n_controlled_X_circuit(qc, [qr[j] for j in range(3)], qr[3],
-                                          [qr[j] for j in range(4, 7)])
-    qc.h(qr[3])
+    composed_gates.n_controlled_X_circuit(qc, [qr[j] for j in range(n - 1)],
+                                          qr[n - 1],
+                                          [qr[j] for j in range(n, 2 * n - 1)])
+    qc.h(qr[n - 1])
 
 
 def negating_00(qc, qr):
