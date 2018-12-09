@@ -163,7 +163,11 @@ def main():
         help=
         "The name of the backend. It makes sense only for online ibmq devices and it's useless otherwise. If not specified, the program automatically choose the least busy ibmq backend."
     )
-    parser.add_argument('--img', action='store_true')
+    parser.add_argument(
+        '--img_dir',
+        help=
+        'If you want to store the image of the circuit, you need to specify the directory'
+    )
     parser.add_argument('--plot', action='store_true')
     args = parser.parse_args()
     n = args.n
@@ -173,7 +177,7 @@ def main():
     online = True if real else args.online
     infos = args.infos
     backend_name = args.backend_name
-    img = args.img
+    img_dir = args.img_dir
     plot = args.plot
     print("real: {0}, online: {1}, infos: {2}, backend_name: {3}".format(
         real, online, infos, backend_name))
@@ -185,11 +189,10 @@ def main():
         oracles.append(oracle_simple.OracleSimple(n, x_stars[i]))
     gc = circuit.get_circuit(n, oracles)
 
-    if (img):
+    if (img_dir is not None):
         from qiskit.tools.visualization import circuit_drawer
-        img_dir = "./img/"
         circuit_drawer(
-            qc, filename=img_dir + "grover_{0}_{1}.png".format(n, x_star))
+            gc, filename=img_dir + "grover_{0}_{1}.png".format(n, x_stars[0]))
 
     backend, max_credits, shots = get_appropriate_backend(
         n, real, online, backend_name)
