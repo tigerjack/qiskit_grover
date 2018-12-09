@@ -168,7 +168,10 @@ def main():
         help=
         'If you want to store the image of the circuit, you need to specify the directory'
     )
-    parser.add_argument('--plot', action='store_true')
+    parser.add_argument(
+        '--plot',
+        action='store_true',
+        help='Plot the histogram of the results')
     args = parser.parse_args()
     n = args.n
     x_stars = args.x_stars
