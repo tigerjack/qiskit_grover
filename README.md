@@ -69,3 +69,4 @@ For n > 3, the number of gates used is really huge and none of the device can re
   * Change code to use `add_register(ancillas)` function
   * Start porting to v 0.7.0
   * Better test on how it works with multiple x_stars
+  * Check circuits w/ other unitary_simulator
