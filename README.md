@@ -2,7 +2,7 @@
 An implementation of Grover's algorithm on qiskit.
 
 ## Prerequisites ##
-It requires the [qiskit development kit](https://github.com/Qiskit/qiskit-terra). Take a look at the repo for a full reference, or just install it using
+It requires the [qiskit development kit](https://github.com/Qiskit/qiskit-terra), version 0.6.0. Take a look at the repo for a full reference, or just install it using
 
 ```
 pip install qiskit
@@ -16,26 +16,28 @@ Check the `grover_test.py` file. Run `python grover_test.py -h` to get an idea o
 ### As a module ###
 Import the `grover_test` module in a python interpreter and run the `build_and_run(n, x_star, real, backend_name)` function. 
   * `n` is the number of qubits (2 or 3)
-  * `x_star` is the marked state (between 0 and 2**n), i.e. the (only) state for which the oracle function returns 1. In general, the oracle should be a black box emitting 1 only on a specific input state. Obviously, in our case, we have to build the oracle ourself.
-  * `online` is True for an online IBMQ device, False (default) otherwise.
+  * `x_star` are the marked state (between 0 and 2**n), i.e. the states for which the oracle function returns 1. In general, the oracle should be a black box emitting 1 only on a given set of input states. Obviously, in our case, we have to build the oracle ourself. Note that at the moment multiple input states can be inserted, but the result are not really tested.
   * `real` is True for a real backend, False (default) for the qasm simulator. If it is set to True, the online option is automatically set to True also.
+  * `online` is True for an online IBMQ device, False (default) otherwise.
   * `backend_name` is the name of the backend you want to use; omit it if you want a default choice. Most of the time, you want to leave it blank. It makes sense only for an online experiment, because the only local backend is qasm.
+
+If you just want to know some useful infos about the circuit, such as the number of actual gates the circuit gets compiled into, run the `build_and_info()` function which takes the same number of parameters.
   
 For example, if you want to run an experiment on a real device with 3 qubits and selecting 5 as the x_star of the oracle, just run
 
 ``` python
 import grover_test as gt
 
-gt.build_and_run(3, 5, real=True, online=True)
+gt.build_and_run(3, [5], real=True, online=True)
 ```
 Note that we can also omit the online parameter, which is automatically True when a real device is used.
   
-or to run a local simulation with 2 qubits and 3 as the special x_star state 
+To run a local simulation with 2 qubits and 3 as the special x_star state 
 
 ``` python
 import grover_test as gt
 
-gt.build_and_run(2, 3, real=True)
+gt.build_and_run(2, [3])
 ```
 
 ### From command line ###
@@ -62,3 +64,8 @@ If instead we only want to know how many gates are needed for the ibmq_16_melbou
 ## Results ##
 The results are promising even for real ibmq devices when n is less than 3. However, even in this case, due to the high number of gates used when compiling on ibmqx5 and ibmq_16_melbourne, those quantum devices return wrong results; ibmqx2 and ibmqx4, on the other hand, give the right answer with an high degree of accuracy.
 For n > 3, the number of gates used is really huge and none of the device can really give a precise answer. The simulation, instead, always return the correct results.
+
+## TODO ##
+  * Change code to use `add_register(ancillas)` function
+  * Start porting to v 0.7.0
+  * Better test on how it works with multiple x_stars
