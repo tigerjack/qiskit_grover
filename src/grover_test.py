@@ -8,11 +8,10 @@ least_busy = None
 
 def _import_modules():
     print("Importing modules")
-    global circuit, oracle_simple, execute, Aer, IBMQ, least_busy
+    global circuit, oracle_simple, execute, least_busy
     import circuit
     import oracle_simple
     from qiskit import execute
-    from qiskit import IBMQ, Aer
     from qiskit.backends.ibmq import least_busy
 
 
@@ -52,12 +51,17 @@ def build_and_run(n, x_stars, real=False, online=False, backend_name=None):
 
 def get_appropriate_backend(n, real, online, backend_name):
     if (not online):
-        print("Local simulator backend")
-        backend = Aer.get_backend('qasm_simulator')
+        global Aer
+        from qiskit import Aer
         max_credits = 10
         shots = 4098
+        print("Local simulator backend")
+        backend = Aer.get_backend('qasm_simulator')
     # Online, real or simuator?
+    # list of online devices: ibmq_qasm_simulator, ibmqx2, ibmqx4, ibmqx5, ibmq_16_melbourne
     else:
+        global IBMQ
+        from qiskit import IBMQ
         print("Online {0} backend".format("real" if real else "simulator"))
         max_credits = 3
         shots = 4098
