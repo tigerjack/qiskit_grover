@@ -41,11 +41,11 @@ def build_and_run(n, x_stars, real=False, online=False, backend_name=None):
     oracles = []
     for i in range(len(x_stars)):
         oracles.append(oracle_simple.OracleSimple(n, x_stars[i]))
-    gc = circuit.get_circuit(n, oracles)
+    gc, n_qubits = circuit.get_circuit(n, oracles)
     if real:
         online = True
     backend, max_credits, shots = get_appropriate_backend(
-        n, real, online, backend_name)
+        n_qubits, real, online, backend_name)
     return run_grover_algorithm(gc, backend, max_credits, shots)
 
 
